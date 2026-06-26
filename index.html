@@ -1,0 +1,378 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dust Bunnies - Post-Tenant Deep Clean</title>
+    <style>
+        :root {
+            --color-a: #0d9488;    --bg-a: #f0fdfa;    --border-a: #99f6e4;
+            --color-b: #7c3aed;    --bg-b: #f5f3ff;    --border-b: #ddd6fe;
+            --color-both: #b45309; --bg-both: #fffbeb; --border-both: #fde68a;
+            --stone-900: #1c1917;  --stone-500: #78716c; --stone-100: #f5f5f4;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            max-width: 740px; margin: 0 auto; padding: 24px 14px;
+            color: var(--stone-900); background: #fafaf9; min-height: 100vh;
+        }
+        @media print { .no-print { display: none !important; } body { background: white; } }
+        .header { border-bottom: 2px solid #e7e5e4; padding-bottom: 20px; margin-bottom: 24px; }
+        .flex-wrap { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .legend-tag { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; border: 1px solid; }
+        .tabs { display: flex; gap: 6px; background: var(--stone-100); border-radius: 10px; padding: 4px; flex: 1; }
+        .tab-btn { flex: 1; padding: 9px 0; border-radius: 7px; border: none; cursor: pointer; font-weight: 700; font-size: 14px; background: transparent; color: var(--stone-500); transition: all 0.15s; }
+        .tab-btn.active { background: #fff; color: var(--stone-900); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .print-btn { background: var(--stone-900); color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 700; cursor: pointer; font-size: 13px; }
+        .alert-box { background: #fff8ed; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap; }
+        .alert-text { font-weight: 700; color: #92400e; }
+        .schedule-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
+        .time-col { min-width: 72px; text-align: right; padding-top: 12px; font-size: 12px; font-weight: 700; }
+        .timeline-line { display: flex; flex-direction: column; align-items: center; padding-top: 14px; }
+        .circle-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+        .card { flex: 1; border-radius: 9px; padding: 10px 14px; margin-bottom: 4px; border: 1px solid; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: 700; font-size: 14px; }
+        .duration-badge { font-size: 11px; background: #fff; border-radius: 20px; padding: 2px 8px; color: var(--stone-500); font-weight: 600; }
+        .task-bullet { font-size: 13px; color: #44403c; padding-left: 12px; margin-bottom: 3px; position: relative; }
+        .task-bullet::before { content: "•"; position: absolute; left: 0; }
+        .split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        @media (max-width: 600px) { .split-grid { grid-template-columns: 1fr; } }
+        .split-col { border-radius: 10px; overflow: hidden; border: 1px solid; }
+        .split-header { color: #fff; padding: 10px 14px; font-weight: 700; font-size: 14px; }
+        .split-item { padding: 8px 14px; display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px solid; }
+        .progress-container { background: #fff; border: 1px solid #e7e5e4; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; }
+        .progress-bar-bg { height: 10px; background: #e7e5e4; border-radius: 99px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--color-a), var(--color-b)); border-radius: 99px; transition: width 0.3s; }
+        .room-block { border-radius: 10px; overflow: hidden; border: 1px solid; margin-bottom: 12px; }
+        .room-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+        .room-title { display: flex; gap: 10px; align-items: center; font-weight: 700; font-size: 15px; }
+        .who-badge { font-size: 11px; background: #fff; border: 1px solid; border-radius: 20px; padding: 1px 8px; font-weight: 700; }
+        .check-row { display: flex; align-items: center; gap: 12px; padding: 8px 6px; cursor: pointer; border-bottom: 1px solid #f5f5f4; transition: background 0.15s; }
+        .check-row:hover { background: #f5f5f4; }
+        .checkbox { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #d6d3d1; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: #fff; }
+        .check-row.checked .checkbox { background: currentColor; }
+        .check-row.checked .checkbox::after { content: "✓"; color: #fff; font-size: 12px; }
+        .check-row.checked .task-text { color: #a8a29e; text-decoration: line-through; }
+        .pro-tips { margin-top: 28px; padding: 14px 16px; background: var(--stone-100); border-radius: 10px; font-size: 12px; color: var(--stone-500); }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="flex-wrap">
+            <div>
+                <h1 style="margin: 0 0 4px; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">🐰 Dust Bunnies Cleaning Portal</h1>
+                <p style="margin: 0; color: var(--stone-500); font-size: 13px;">Custom Move-Out Operational Engine · 2,700 sq ft[cite: 2]</p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <span class="legend-tag" style="background: var(--bg-a); color: var(--color-a); border-color: var(--border-a);">Person A</span>
+                <span class="legend-tag" style="background: var(--bg-b); color: var(--color-b); border-color: var(--border-b);">Person B</span>
+                <span class="legend-tag" style="background: var(--bg-both); color: var(--color-both); border-color: var(--border-both);">Together</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tab System -->
+    <div class="no-print" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('schedule')">⏱ Timeline</button>
+            <button class="tab-btn" onclick="switchTab('checklist')">☑ Operational Checklist</button>
+        </div>
+        <button class="print-btn" onclick="window.print()">🖨 Print Plan</button>
+    </div>
+
+    <!-- TIMELINE TAB -->
+    <div id="tab-schedule">
+        <div class="alert-box">
+            <span class="alert-text">⏰ Deployment: 8:00 AM</span>
+            <span class="alert-text">🏁 Target Window: ~4:00 PM</span>
+            <span class="alert-text" style="color: #78716c; font-weight: 500;">~8 Hours Active Window (2 Person Crew)[cite: 2]</span>
+        </div>
+
+        <!-- Block 1 -->
+        <div class="schedule-row">
+            <div class="time-col" style="color: var(--color-both);">8:00 AM<div style="color: #a8a29e; font-size:11px;">→ 8:45 AM</div></div>
+            <div class="timeline-line"><div class="circle-dot" style="background: var(--color-both);"></div><div style="width:2px; flex:1; background:#e7e5e4; min-height:40px;"></div></div>
+            <div class="card" style="background: var(--bg-both); border-color: var(--border-both); color: var(--color-both);">
+                <div class="card-header"><span>TOGETHER — Dry Sweep Entire House</span><span class="duration-badge">45 min</span></div>
+                <div class="task-bullet">Knock down all cobwebs from ceiling corners[cite: 2]</div>
+                <div class="task-bullet">Dust ceiling fans (both sides of blades)[cite: 2]</div>
+                <div class="task-bullet">Dust all light fixtures and vents/registers[cite: 2]</div>
+                <div class="task-bullet">Wipe blinds with rubber-gloved hands[cite: 2]</div>
+                <div class="task-bullet">Open all windows & doors to air out the house[cite: 2]</div>
+            </div>
+        </div>
+
+        <!-- Split Block Divider -->
+        <div style="display: flex; align-items: center; gap: 10px; margin: 20px 0 14px;">
+            <div style="height: 1px; flex: 1; background: #e7e5e4;"></div>
+            <span style="font-size: 12px; font-weight: 700; color: var(--stone-500);">8:45 AM — SPLIT EXECUTION INTERFACE (4 HOURS)[cite: 2]</span>
+            <div style="height: 1px; flex: 1; background: #e7e5e4;"></div>
+        </div>
+
+        <!-- Split Grid Area -->
+        <div class="split-grid">
+            <div class="split-col" style="background: var(--bg-a); border-color: var(--border-a);">
+                <div class="split-header" style="background: var(--color-a);">Person A — Beds & Baths[cite: 2]</div>
+                <div class="split-item" style="border-color: var(--border-a);"><div><strong>8:45</strong><br>Bedroom 1[cite: 2]</div><span class="duration-badge">30m</span></div>
+                <div class="split-item" style="border-color: var(--border-a);"><div><strong>9:15</strong><br>Bedroom 2[cite: 2]</div><span class="duration-badge">30m</span></div>
+                <div class="split-item" style="border-color: var(--border-a);"><div><strong>9:45</strong><br>Bedroom 3[cite: 2]</div><span class="duration-badge">30m</span></div>
+                <div class="split-item" style="border-color: var(--border-a);"><div><strong>10:15</strong><br>Bedroom 4[cite: 2]</div><span class="duration-badge">30m</span></div>
+                <div class="split-item" style="border-color: var(--border-a);"><div><strong>10:45</strong><br>Bathroom 1[cite: 2]</div><span class="duration-badge">30m</span></div>
+                <div class="split-item" style="border-color: var(--border-a);"><div><strong>11:15</strong><br>Bathroom 2[cite: 2]</div><span class="duration-badge">30m</span></div>
+                <div class="split-item" style="border-color: var(--border-a);"><div><strong>11:45</strong><br>Bathroom 3[cite: 2]</div><span class="duration-badge">30m</span></div>
+                <div class="split-item" style="border-color: var(--border-a); border-bottom: none;"><div><strong>12:15</strong><br>Bathroom 4[cite: 2]</div><span class="duration-badge">30m</span></div>
+            </div>
+            <div class="split-col" style="background: var(--bg-b); border-color: var(--border-b);">
+                <div class="split-header" style="background: var(--color-b);">Person B — Kitchen & Living[cite: 2]</div>
+                <div class="split-item" style="border-color: var(--border-b);"><div><strong>8:45</strong><br>Kitchen (Deep Clean Appliances)[cite: 2]</div><span class="duration-badge">60m</span></div>
+                <div class="split-item" style="border-color: var(--border-b);"><div><strong>9:45</strong><br>Living Room (Walls & Scuffs)[cite: 2]</div><span class="duration-badge">35m</span></div>
+                <div class="split-item" style="border-color: var(--border-b);"><div><strong>10:20</strong><br>Dining Room[cite: 2]</div><span class="duration-badge">30m</span></div>
+                <div class="split-item" style="border-color: var(--border-b);"><div><strong>10:50</strong><br>Den Area[cite: 2]</div><span class="duration-badge">30m</span></div>
+                <div class="split-item" style="border-color: var(--border-b);"><div><strong>11:20</strong><br>Hallways, Closets, Laundry[cite: 2]</div><span class="duration-badge">40m</span></div>
+                <div class="split-item" style="border-color: var(--border-b); border-bottom: none;"><div><strong>12:00</strong><br>Pet Hair Extraction Pass[cite: 2]</div><span class="duration-badge">45m</span></div>
+            </div>
+        </div>
+
+        <!-- Block 3 -->
+        <div class="schedule-row" style="margin-top: 15px;">
+            <div class="time-col" style="color: var(--stone-500);">12:45 PM<div style="color: #a8a29e; font-size:11px;">→ 1:00 PM</div></div>
+            <div class="timeline-line"><div class="circle-dot" style="background: var(--stone-500);"></div><div style="width:2px; flex:1; background:#e7e5e4; min-height:40px;"></div></div>
+            <div class="card" style="background: #f5f5f4; border-color: #e7e5e4; color: var(--stone-500);">
+                <div class="card-header"><span>TOGETHER — Mandatory Crew Break</span><span class="duration-badge">15 min</span></div>
+                <div class="task-bullet" style="color: var(--stone-500);">Hydrate, rest hands, fuel up for final push[cite: 2]</div>
+            </div>
+        </div>
+
+        <!-- Block 4 -->
+        <div class="schedule-row">
+            <div class="time-col" style="color: var(--color-both);">1:00 PM<div style="color: #a8a29e; font-size:11px;">→ 2:00 PM</div></div>
+            <div class="timeline-line"><div class="circle-dot" style="background: var(--color-both);"></div><div style="width:2px; flex:1; background:#e7e5e4; min-height:40px;"></div></div>
+            <div class="card" style="background: var(--bg-both); border-color: var(--border-both); color: var(--color-both);">
+                <div class="card-header"><span>TOGETHER — Glass & Window Mechanics</span><span class="duration-badge">60 min</span></div>
+                <div class="task-bullet">Work room-by-room: One operator inside, one outside[cite: 2]</div>
+                <div class="task-bullet">Vacuum window tracks first, scrub tracks with toothbrush[cite: 2]</div>
+                <div class="task-bullet">Squeegee glass in fluent S-pattern top-to-bottom[cite: 2]</div>
+                <div class="task-bullet">Wipe frames, deep sills, and edges after glass clears[cite: 2]</div>
+            </div>
+        </div>
+
+        <!-- Block 5 -->
+        <div class="schedule-row">
+            <div class="time-col" style="color: var(--color-both);">2:00 PM<div style="color: #a8a29e; font-size:11px;">→ 2:45 PM</div></div>
+            <div class="timeline-line"><div class="circle-dot" style="background: var(--color-both);"></div><div style="width:2px; flex:1; background:#e7e5e4; min-height:40px;"></div></div>
+            <div class="card" style="background: var(--bg-both); border-color: var(--border-both); color: var(--color-both);">
+                <div class="card-header"><span>TOGETHER — Unified High-Volume Vacuum Pass</span><span class="duration-badge">45 min</span></div>
+                <div class="task-bullet">Person A driving vacuum extractor forward through zones[cite: 2]</div>
+                <div class="task-bullet">Person B trailing directly behind with floor rinse system[cite: 2]</div>
+                <div class="task-bullet">Flow sequence: Bedrooms → Hallways → Living → Kitchen → Bathrooms[cite: 2]</div>
+            </div>
+        </div>
+
+        <!-- Block 6 -->
+        <div class="schedule-row">
+            <div class="time-col" style="color: var(--color-both);">2:45 PM<div style="color: #a8a29e; font-size:11px;">→ 3:30 PM</div></div>
+            <div class="timeline-line"><div class="circle-dot" style="background: var(--color-both);"></div><div style="width:2px; flex:1; background:#e7e5e4; min-height:40px;"></div></div>
+            <div class="card" style="background: var(--bg-both); border-color: var(--border-both); color: var(--color-both);">
+                <div class="card-header"><span>TOGETHER — Hard Surface Floor Mop</span><span class="duration-badge">45 min</span></div>
+                <div class="task-bullet">Lock down and finish all remaining mopping blocks[cite: 2]</div>
+                <div class="task-bullet">Incorporate white vinegar additive to completely neutralize animal odors[cite: 2]</div>
+                <div class="task-bullet">Execute bathroom floor matrix absolutely last[cite: 2]</div>
+            </div>
+        </div>
+
+        <!-- Block 7 -->
+        <div class="schedule-row">
+            <div class="time-col" style="color: var(--color-both);">3:30 PM<div style="color: #a8a29e; font-size:11px;">→ 4:00 PM</div></div>
+            <div class="timeline-line"><div class="circle-dot" style="background: var(--color-both);"></div></div>
+            <div class="card" style="background: var(--bg-both); border-color: var(--border-both); color: var(--color-both);">
+                <div class="card-header"><span>TOGETHER — Final Polish & Odor Eradication</span><span class="duration-badge">30 min</span></div>
+                <div class="task-bullet">Empty all remaining internal bins, extract bags immediately to main dumpster[cite: 2]</div>
+                <div class="task-bullet">Sanitize front portal: Wipe main entrance inside and out, sweep entryway porch[cite: 2]</div>
+                <div class="task-bullet">Run final mechanical walkthrough: Perform structural visual and environmental sniff test[cite: 2]</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHECKLIST TAB -->
+    <div id="tab-checklist" style="display: none;">
+        <!-- Live Global Progress Bar Tracker -->
+        <div class="progress-container">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-weight: 700;">Global Task Completion</span>
+                <span id="progress-text" style="font-weight: 800;">0/0 (0%)</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div id="progress-bar" class="progress-bar-fill"></div>
+            </div>
+        </div>
+
+        <!-- Appended Room Matrix Container via JS Architecture -->
+        <div id="checklist-render-zone"></div>
+    </div>
+
+    <!-- Footnotes & Production Notes -->
+    <div class="pro-tips">
+        <strong>🐰 Professional Field Matrix:</strong> Wear protective masks during the initial hour due to heavy suspended dust matter[cite: 2]. Kill the HVAC system completely before execution to prevent the recirculation of pet dander[cite: 2]. Saturate the bathrooms with chemical cleaner to break up elements before scrubbing to save maximum crew energy[cite: 2].
+    </div>
+
+    <!-- Vanilla Javascript Logic -->
+    <script>
+        // Core Structured Architecture (Converted straight from the React source code)
+        const roomsData = [
+            {
+                name: "Bedrooms (Zones 1-4 Complete)", icon: "🛏️", who: "A", color: "var(--color-a)", bg: "var(--bg-a)", border: "var(--border-a)",
+                tasks: [
+                    "Bag or dispose of any remaining linens[cite: 2]", "Wipe ceiling corner cobwebs[cite: 2]", "Dust ceiling fan — both sides of blades[cite: 2]",
+                    "Wipe light fixture[cite: 2]", "Wipe inside and outside of all closets (shelves, rod, floor, walls)[cite: 2]",
+                    "Wipe all walls — use Magic Eraser on scuffs[cite: 2]", "Wipe all baseboards[cite: 2]", "Wipe window sill and frame[cite: 2]",
+                    "Wipe door frame and both sides of door[cite: 2]", "Wipe light switch and outlet covers[cite: 2]",
+                    "Rubber broom carpet to ball up pet hair, then vacuum[cite: 2]", "Sprinkle baking soda on carpet, wait 15 min, vacuum again[cite: 2]"
+                ]
+            },
+            {
+                name: "Bathrooms (Zones 1-4 Complete)", icon: "🚿", who: "A", color: "var(--color-a)", bg: "var(--bg-a)", border: "var(--border-a)",
+                tasks: [
+                    "Spray all surfaces with cleaner — let soak 5 min[cite: 2]", "Scrub toilet bowl inside (under rim especially), flush[cite: 2]",
+                    "Wipe toilet outside: base, tank, lid, seat both sides, behind toilet[cite: 2]", "Scrub grout lines in shower/tub[cite: 2]",
+                    "Scrub tub or shower walls and floor[cite: 2]", "Clean shower drain — remove all hair[cite: 2]", "Scrub sink bowl, faucet, and clean drain[cite: 2]",
+                    "Wipe mirror[cite: 2]", "Wipe light fixture and exhaust fan vent cover[cite: 2]", "Wipe inside and outside of all cabinets and under sink[cite: 2]",
+                    "Wipe all baseboards[cite: 2]", "Wipe door frame and door[cite: 2]", "Mop floor, get all corners[cite: 2]"
+                ]
+            },
+            {
+                name: "Kitchen Command Zone", icon: "🍽️", who: "B", color: "var(--color-b)", bg: "var(--bg-b)", border: "var(--border-b)",
+                tasks: [
+                    "Pull fridge out — clean behind and underneath[cite: 2]", "Clean inside fridge: all shelves, drawers, door seals, walls[cite: 2]",
+                    "Clean inside freezer[cite: 2]", "Pull stove out — clean behind and underneath[cite: 2]", "Clean inside oven thoroughly[cite: 2]",
+                    "Clean stovetop, burners, and drip pans[cite: 2]", "Degrease range hood and clean/replace filter[cite: 2]", "Clean inside microwave[cite: 2]",
+                    "Wipe all appliance exteriors[cite: 2]", "Wipe inside all cabinets and drawers[cite: 2]", "Wipe all cabinet door fronts[cite: 2]",
+                    "Clean sink, faucet, garbage disposal[cite: 2]", "Wipe all countertops and backsplash[cite: 2]", "Wipe all walls and baseboards[cite: 2]",
+                    "Sweep and mop floor, pull into corners[cite: 2]"
+                ]
+            },
+            {
+                name: "Living, Dining & Den Areas", icon: "🛋️", who: "B", color: "var(--color-b)", bg: "var(--bg-b)", border: "var(--border-b)",
+                tasks: [
+                    "Wipe ceiling corner cobwebs[cite: 2]", "Dust ceiling fans and light fixtures[cite: 2]", "Wipe all walls — Magic Eraser on scuffs and marks[cite: 2]",
+                    "Wipe all baseboards[cite: 2]", "Wipe window sills and frames[cite: 2]", "Wipe light switches and outlet covers[cite: 2]",
+                    "Wipe door frames[cite: 2]", "Rubber broom carpet for pet hair, then vacuum[cite: 2]", "Run dryer sheet along baseboards for remaining hair[cite: 2]"
+                ]
+            },
+            {
+                name: "Structural Windows (Combined)", icon: "🪟", who: "BOTH", color: "var(--color-both)", bg: "var(--bg-both)", border: "var(--border-both)",
+                tasks: [
+                    "Vacuum each window track completely[cite: 2]", "Scrub window tracks with old toothbrush[cite: 2]", "Wipe window frame inside[cite: 2]",
+                    "Wash glass inside with vinegar solution, squeegee S-pattern[cite: 2]", "Wash glass outside with soapy water, squeegee S-pattern[cite: 2]",
+                    "Wipe sill and edge after glass is done[cite: 2]"
+                ]
+            },
+            {
+                name: "Dog Hair & Odor Eradication", icon: "🐾", who: "BOTH", color: "var(--color-both)", bg: "var(--bg-both)", border: "var(--border-both)",
+                tasks: [
+                    "Rubber broom all carpet — balls up hair for easy vacuuming[cite: 2]", "Rubber-gloved hand across any upholstered surfaces[cite: 2]",
+                    "Dryer sheet wiped along all baseboards catches clinging hair[cite: 2]", "Baking soda sprinkled on all carpet — wait 15–20 min — vacuum[cite: 2]",
+                    "White vinegar diluted and wiped on hard floors — neutralizes odor[cite: 2]"
+                ]
+            }
+        ];
+
+        // State Machine Storage
+        let checkedState = {};
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            if(tabId === 'schedule') {
+                document.getElementById('tab-schedule').style.display = 'block';
+                document.getElementById('tab-checklist').style.display = 'none';
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            } else {
+                document.getElementById('tab-schedule').style.display = 'none';
+                document.getElementById('tab-checklist').style.display = 'block';
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            }
+        }
+
+        function renderChecklist() {
+            const container = document.getElementById('checklist-render-zone');
+            container.innerHTML = '';
+            
+            roomsData.forEach((room, roomIdx) => {
+                const block = document.createElement('div');
+                block.className = 'room-block';
+                block.style.borderColor = room.border;
+                
+                // Calculate internal room metrics
+                let completedCount = 0;
+                room.tasks.forEach((_, taskIdx) => {
+                    if(checkedState[`${roomIdx}-${taskIdx}`]) completedCount++;
+                });
+                const isRoomDone = completedCount === room.tasks.length;
+
+                block.innerHTML = `
+                    <div class="room-header" style="background: ${isRoomDone ? '#f0fdf4' : room.bg};" onclick="toggleExpand('room-tasks-${roomIdx}')">
+                        <div class="room-title">
+                            <span>${room.icon}</span>
+                            <span>${room.name}</span>
+                            <span class="who-badge" style="border-color:${room.border}; color:${room.color};">Person ${room.who}</span>
+                        </div>
+                        <div style="font-size: 13px; font-weight: 600; color: ${isRoomDone ? '#16a34a' : 'var(--stone-500)'};">
+                            ${isRoomDone ? '✓ Zone Secure' : `${completedCount}/${room.tasks.length}`}
+                        </div>
+                    </div>
+                    <div id="room-tasks-${roomIdx}" style="padding: 6px 14px 10px; background:#fff;"></div>
+                `;
+                
+                container.appendChild(block);
+                const taskContainer = document.getElementById(`room-tasks-${roomIdx}`);
+                
+                room.tasks.forEach((task, taskIdx) => {
+                    const uniqueKey = `${roomIdx}-${taskIdx}`;
+                    const row = document.createElement('div');
+                    row.className = `check-row ${checkedState[uniqueKey] ? 'checked' : ''}`;
+                    row.style.color = room.color;
+                    row.innerHTML = `
+                        <div class="checkbox"></div>
+                        <span class="task-text">${task}</span>
+                    `;
+                    row.addEventListener('click', () => {
+                        checkedState[uniqueKey] = !checkedState[uniqueKey];
+                        localStorage.setItem('dust_bunnies_state', JSON.stringify(checkedState));
+                        renderChecklist();
+                        updateProgressBar();
+                    });
+                    taskContainer.appendChild(row);
+                });
+            });
+        }
+
+        function updateProgressBar() {
+            let totalTasks = 0;
+            let currentChecked = 0;
+            roomsData.forEach((room, roomIdx) => {
+                room.tasks.forEach((_, taskIdx) => {
+                    totalTasks++;
+                    if(checkedState[`${roomIdx}-${taskIdx}`]) currentChecked++;
+                });
+            });
+            const pct = totalTasks > 0 ? Math.round((currentChecked / totalTasks) * 100) : 0;
+            document.getElementById('progress-bar').style.width = pct + '%';
+            document.getElementById('progress-text').innerText = `${currentChecked} / ${totalTasks} (${pct}%)`;
+        }
+
+        function toggleExpand(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+        }
+
+        // Initialize state engine on launch
+        const savedState = localStorage.getItem('dust_bunnies_state');
+        if(savedState) checkedState = JSON.parse(savedState);
+        
+        renderChecklist();
+        updateProgressBar();
+    </script>
+</body>
+</html>
